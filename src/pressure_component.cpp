@@ -16,14 +16,31 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
 
 void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> msg){
     receive_image = std::move(*msg);
-
-    RCLCPP_INFO_STREAM(this->get_logger(),"Receive image address: " << &(msg->data));
+    
+    // RCLCPP_INFO_STREAM(this->get_logger(),"Receive image address: " << &(msg->data));
     pressure_value = "0.67";
     std_msgs::msg::String msg_S;
     msg_S.data = pressure_value;
-    pressure_value_publisher_->publish(msg_S);
-
-    result_image_publisher_->publish(receive_image);
+    
+    // 黒画像が来るまで値を格納し続け、近似値を渡すか？
+    // 最後の値を渡すか？
+    // 安全性チェックを追加
+    if (receive_image.empty()) {
+        RCLCPP_WARN(this->get_logger(), "Received image is empty. Skipping.");
+        return;
+    }
+    if (receive_image.type() != CV_8UC1) {
+        RCLCPP_WARN(this->get_logger(), "Image type is not CV_8UC1 (grayscale). countNonZero may fail. Type: %d", receive_image.type());
+        return;
+    }
+    if (cv::countNonZero(receive_image) == 0) {
+        pressure_value_publisher_->publish(msg_S);
+        RCLCPP_INFO_STREAM(this->get_logger(),"Receive brack");
+        result_image_publisher_->publish(result_image);
+    }else{
+        result_image = receive_image.clone();
+    }
+    
 }
 
 } //namespace component_pressure
