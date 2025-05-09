@@ -7,7 +7,10 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
 {
     receive_image_ = this->create_subscription<MyAdaptedType>("pressure_image",10,std::bind(&PressureMeasurement::update_image_callback,this,std::placeholders::_1));
     
+    // 結果の報告はFloat64型のメッセージで返すかもしれない
+    pressure_value_publisher_f = this->create_publisher<std_msgs::msg::Float64>("pressure_result_data",10);
     pressure_value_publisher_ = this->create_publisher<std_msgs::msg::String>("pressure_result_data",10);
+    
     result_image_publisher_ = this->create_publisher<MyAdaptedType>("pressure_result_image",10);//不要だったらコメントアウト
 
     // cv::Mat型のreceive_imageを入力としたメーター値検出関数 返り値std::pair<string,cv::Mat>func(cv::Mat )

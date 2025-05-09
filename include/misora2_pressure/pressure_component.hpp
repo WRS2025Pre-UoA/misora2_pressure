@@ -14,6 +14,7 @@
 #include <opencv2/opencv.hpp>
 #include "rclcpp/rclcpp.hpp"
 #include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <rclcpp/type_adapter.hpp>
@@ -30,6 +31,7 @@ public:
     using MyAdaptedType = rclcpp::TypeAdapter<cv::Mat, sensor_msgs::msg::Image>;
 
     std::string pressure_value;
+    double pressure_value_d;
     cv::Mat result_image, receive_image;
 
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
@@ -40,6 +42,7 @@ private:
 
     rclcpp::Subscription<MyAdaptedType>::SharedPtr receive_image_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pressure_value_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pressure_value_publisher_f;
     rclcpp::Publisher<MyAdaptedType>::SharedPtr result_image_publisher_;
 };
 
