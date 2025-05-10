@@ -7,6 +7,8 @@
 #include <chrono>
 #include <functional>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 #include <rclcpp/clock.hpp>
 #include <rclcpp/time.hpp>
@@ -30,15 +32,14 @@ class PressureMeasurement : public rclcpp::Node
 public:
     using MyAdaptedType = rclcpp::TypeAdapter<cv::Mat, sensor_msgs::msg::Image>;
 
-    std::string pressure_value;
-    double pressure_value_d;
-    cv::Mat result_image, receive_image;
+    bool flag = false;
 
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
     PressureMeasurement() : PressureMeasurement(rclcpp::NodeOptions{}) {}
 
 private:
     void update_image_callback(const std::unique_ptr<cv::Mat> msg);
+    std::string to_string_with_precision(double value, int precision);
 
     rclcpp::Subscription<MyAdaptedType>::SharedPtr receive_image_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pressure_value_publisher_;
