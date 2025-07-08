@@ -12,6 +12,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# === ONNX Runtime ===
+set(ONNXRUNTIME_DIR "onnxruntime-linux-x64-1.21.0")
+include_directories(${ONNXRUNTIME_DIR}/include)
+link_directories(${ONNXRUNTIME_DIR}/lib)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -34,12 +39,33 @@ set(dependencies
     std_msgs
 )
 
-add_library(pressure_library SHARED src/pressure_component.cpp)
-ament_target_dependencies(pressure_library ${dependencies})
-rclcpp_components_register_nodes(pressure_library "component_pressure::PressureMeasurement")
+# *.cpp ファイルを明示的に集める
+file(GLOB_RECURSE NN_SOURCES "src/nn/*.cpp")
+file(GLOB_RECURSE UTILS_SOURCES "src/utils/*.cpp")
 
-add_executable(pressure_node src/pressure_component.cpp src/pressure_node.cpp)
+# ライブラリ
+add_library(pressure_library SHARED src/pressure_component.cpp src/detection.cpp ${NN_SOURCES} ${UTILS_SOURCES})
+ament_target_dependencies(pressure_library ${dependencies})
+target_link_libraries(pressure_library onnxruntime) # ONNX
+rclcpp_components_register_nodes(pressure_library "component_pressure::PressureMeasurement")
+# ノード　
+add_executable(pressure_node src/pressure_component.cpp src/pressure_node.cpp src/detection.cpp ${NN_SOURCES} ${UTILS_SOURCES})
 ament_target_dependencies(pressure_node ${dependencies})
+target_link_libraries(pressure_node onnxruntime) # ONNX
+
+# メーター自動検出 main関数から実行
+add_executable(pressure_detection 
+    src/detection_main.cpp 
+    src/detection.cpp 
+    ${NN_SOURCES}
+    ${UTILS_SOURCES})
+ament_target_dependencies(pressure_detection ${dependencies})
+target_link_libraries(pressure_detection onnxruntime) # ONNX
+
+set_target_properties(pressure_detection PROPERTIES 
+ INSTALL_RPATH "$(ONNXRUNTIME_DIR)"
+ BUILD_RPATH "$(ONNXRUNTIME_DIR)"
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -57,6 +83,7 @@ install(TARGETS
 
 install(TARGETS
   pressure_node
+  pressure_detection
   DESTINATION lib/${PROJECT_NAME}
 )
 

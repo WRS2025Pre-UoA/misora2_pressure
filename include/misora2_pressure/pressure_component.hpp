@@ -22,6 +22,7 @@
 #include <rclcpp/type_adapter.hpp>
 
 #include "misora2_pressure/cv_mat_type_adapter.hpp"
+#include "misora2_pressure/detection.hpp"
 
 using namespace std::chrono_literals;
 
@@ -33,6 +34,12 @@ public:
     using MyAdaptedType = rclcpp::TypeAdapter<cv::Mat, sensor_msgs::msg::Image>;
 
     bool flag = false;
+
+    // メーター検出の設定---------------------
+    AutoBackendOnnx model;
+    std::vector<cv::Scalar> colors;
+    std::unordered_map<int, std::string> names;
+    // -------------------------------------
 
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
     PressureMeasurement() : PressureMeasurement(rclcpp::NodeOptions{}) {}
