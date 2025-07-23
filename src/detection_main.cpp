@@ -1,7 +1,8 @@
 #include "misora2_pressure/detection.hpp"
 
 int main() {
-    std::string image_file = "../image_convert/OriginalData_640/meter_00481.jpg";
+    // std::string image_file = "../image_convert/OriginalData_640/meter_00481.jpg";
+    std::string image_file = "pressure_image/20250221_pressure1.png";
     // std::cout << image_file << std::endl;
     // 初期設定-----------------------------------------------------
     if (!std::filesystem::exists(Detection::MODEL_PATH)) {
@@ -36,10 +37,18 @@ int main() {
     std::cout << "Processing image: " << image_file << " (size: " << img.size() << ")" << std::endl;
     // 結果の描画
     cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
-    auto [trimmed, boxed] = Detection::plot_results(img, objs, colors, names, img.size());
-    if(trimmed.channels() == 1) std::cout << "Not found" << std::endl;
-    else std::cout << "trimmed: " << trimmed.size() << std::endl;
-
+    auto [trimmed, boxed] = Detection::plot_results(img, objs, colors, names);
+    if(trimmed.channels() == 1){
+        std::cout << "Not found" << std::endl;
+    }
+    else {
+        std::cout << "trimmed: " << trimmed.size() << std::endl;
+        cv::imshow("trimmed",trimmed);
+        cv::imshow("with box",boxed);
+        cv::waitKey(0);
+        cv::destroyAllWindows();
+    }
+    
 
     return 0;
 }

@@ -41,7 +41,7 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                 Detection::MASK_THRESHOLD,
                 Detection::CONVERSION_CODE
             );
-            auto [trimming_image, result_image] = Detection::plot_results(receive_image, objs, colors, names, receive_image.size());
+            auto [trimming_image, result_image] = Detection::plot_results(receive_image, objs, colors, names);
             if(trimming_image.channels() == 1) std::cout << "Not found" << std::endl;
             else{ std::cout << "trimmed: " << trimming_image.size() << std::endl;
             // auto[result_image, trimming_image] = func1(receive_image); // 成功：検出したメーターを囲んだ画像、切り抜いた画像　失敗：黒画像ｘ２
