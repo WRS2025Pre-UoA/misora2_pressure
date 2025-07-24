@@ -8,11 +8,20 @@
 ## コード(src/)
  - detction.cpp : Yolo8を用いたメーターの自動検出を行う
  - detction_main.cpp : detection.cppを単体で起動　あらかじめ読み取る画像パスを宣言
- ~~~bash!
- ros2 run misora2_pressure pressure_detection
- ~~~
  - pressure_component.cpp : ノード間の通信を行う ライブラリ化されている
  - pressure_node.cpp : pressure_componentを単体(ノードとして)で起動
- ~~~bash!
- ros2 run misora2_pressure pressure_node
- ~~~
+
+## 実行コード
+### ノード単体で実行
+~~~bash!
+colcon build 
+source install/setup.bash
+ros2 run misora2_pressure pressure_node
+~~~
+
+### C++プログラム実行
+~~~bash!
+colcon build --symlink-install
+source install/setup.bash
+./build/misora2_pressure/pressure_detection <画像パス>
+~~~

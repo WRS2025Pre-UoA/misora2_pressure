@@ -1,8 +1,9 @@
 #include "misora2_pressure/detection.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
     // std::string image_file = "../image_convert/OriginalData_640/meter_00481.jpg";
-    std::string image_file = "pressure_image/20250221_pressure1.png";
+    // std::string image_file = "pressure_image/20250221_pressure1.png";
+    std::string image_file = argv[1];
     // std::cout << image_file << std::endl;
     // 初期設定-----------------------------------------------------
     if (!std::filesystem::exists(Detection::MODEL_PATH)) {
