@@ -13,7 +13,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # === ONNX Runtime ===
-set(ONNXRUNTIME_DIR "onnxruntime-linux-x64-1.21.0")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(ONNXRUNTIME_DIR "onnxruntime-linux-x64-1.21.0")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(ONNXRUNTIME_DIR "onnxruntime-linux-aarch64-1.19.0")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
 include_directories(${ONNXRUNTIME_DIR}/include)
 link_directories(${ONNXRUNTIME_DIR}/lib)
 

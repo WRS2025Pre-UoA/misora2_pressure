@@ -22,6 +22,5 @@ ros2 run misora2_pressure pressure_node
 ### C++プログラム実行
 ~~~bash!
 colcon build --symlink-install
-source install/setup.bash
-./build/misora2_pressure/pressure_detection <画像パス>
+./build/misora2_pressure/pressure_detection <画像パス> # テスト画像 : src/misora2_pressure/test.jpg
 ~~~
