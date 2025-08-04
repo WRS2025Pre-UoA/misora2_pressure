@@ -29,7 +29,7 @@ AutoBackendOnnx::AutoBackendOnnx(const char* modelPath, const char* logid, const
 AutoBackendOnnx::AutoBackendOnnx(const char* modelPath, const char* logid, const char* provider)
     : OnnxModelBase(modelPath, logid, provider) {
     // init metadata etc
-    OnnxModelBase(modelPath, logid, provider);
+    // OnnxModelBase(modelPath, logid, provider);
     // then try to get additional info from metadata like imgsz, stride etc;
     //  ideally you should get all of them but you'll raise error if smth is not in metadata (or not under the appropriate keys)
     const std::unordered_map<std::string, std::string>& base_metadata = OnnxModelBase::getMetadata();
@@ -363,9 +363,15 @@ void AutoBackendOnnx::postprocess_masks(cv::Mat& output0, cv::Mat& output1, Imag
     {
         int idx = nms_result[i];
         boxes[idx] = boxes[idx] & cv::Rect(0, 0, image_info.raw_size.width, image_info.raw_size.height);
-        YoloResults result = { class_ids[idx] ,confidences[idx] ,boxes[idx] };
+        // masks[idx] は1次元データのベクターなので cv::Mat としてラップ
+        cv::Mat mask_mat_1d = cv::Mat(masks[idx]).clone();  // 1列Nx1のMat
+
+        // 2Dにreshape (チャネル数=1)、行数 = マスク高さなどに合わせて調整
+        // 例えば maskのサイズが mh * mw なら
+        cv::Mat mask_mat_2d = mask_mat_1d.reshape(1, mh).clone();
+        YoloResults result = { class_ids[idx] ,confidences[idx] ,boxes[idx] ,mask_mat_2d};
         _get_mask2(cv::Mat(masks[idx]).t(), proto, image_info, boxes[idx], result.mask, mask_threshold,
-            iw, ih, mw, mh, masks_features_num);
+            iw, ih, mw, mh/*, masks_features_num*/);
         output.push_back(result);
     }
 }
@@ -415,7 +421,7 @@ void AutoBackendOnnx::postprocess_detects(cv::Mat& output0, ImageInfo image_info
     for (int idx : nms_result)
     {
         boxes[idx] = boxes[idx] & cv::Rect(0, 0, image_info.raw_size.width, image_info.raw_size.height);
-        YoloResults result = { class_ids[idx] ,confidences[idx] ,boxes[idx] };
+        YoloResults result = { class_ids[idx] ,confidences[idx] ,boxes[idx] ,cv::Mat() ,std::vector<float>()};
         output.push_back(result);
     }
 }
@@ -458,8 +464,8 @@ void AutoBackendOnnx::postprocess_kpts(cv::Mat& output0, ImageInfo& image_info, 
 void AutoBackendOnnx::_get_mask2(const cv::Mat& masks_features,
     const cv::Mat& proto,
     const ImageInfo& image_info, const cv::Rect bound, cv::Mat& mask_out,
-    const float& mask_thresh, int& iw, int& ih, int& mw, int& mh, int& masks_features_num,
-    bool round_downsampled)
+    const float& mask_thresh, int& iw, int& ih, int& mw, int& mh/*, int& masks_features_num,
+    bool round_downsampled*/)
 
 {
     cv::Size img0_shape = image_info.raw_size;
@@ -501,7 +507,7 @@ void AutoBackendOnnx::fill_blob(cv::Mat& image, float*& blob, std::vector<int64_
     {
         inputTensorShape = getInputTensorShape();
     }
-    int inputChannelsNum = inputTensorShape[1];
+    // int inputChannelsNum = inputTensorShape[1];
     int rtype = CV_32FC3;
     image.convertTo(floatImage, rtype, 1.0f / 255.0);
     blob = new float[floatImage.cols * floatImage.rows * floatImage.channels()];

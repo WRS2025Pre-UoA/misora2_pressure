@@ -26,8 +26,8 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
 
 void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> msg){
     cv::Mat receive_image = std::move(*msg);
-    double pressure_value;
-    bool flag_sf; // success / failure
+    // double pressure_value;
+
     cv::Mat result_image, trimming_image;
 
     if (not(receive_image.empty())){

@@ -9,7 +9,7 @@
  * \brief padding value when letterbox changes image size ratio
  */
 const int& DEFAULT_LETTERBOX_PAD_VALUE = 114;
-
+const std::pair<float, cv::Point2f> Augment::DEFAULT_RATIO_PAD = std::make_pair(-1.0f, cv::Point2f(-1.0f, -1.0f));
 
 void Augment::letterbox(const cv::Mat& image,
     cv::Mat& outImage,
@@ -25,7 +25,7 @@ void Augment::letterbox(const cv::Mat& image,
     if (!scaleUp)
         r = std::min(r, 1.0f);
 
-    float ratio[2]{ r, r };
+    // float ratio[2]{ r, r };
     int newUnpad[2]{ static_cast<int>(std::round(static_cast<float>(shape.width) * r)),
                      static_cast<int>(std::round(static_cast<float>(shape.height) * r)) };
 
@@ -43,8 +43,8 @@ void Augment::letterbox(const cv::Mat& image,
         dh = 0.0f;
         newUnpad[0] = newShape.width;
         newUnpad[1] = newShape.height;
-        ratio[0] = static_cast<float>(newShape.width) / static_cast<float>(shape.width);
-        ratio[1] = static_cast<float>(newShape.height) / static_cast<float>(shape.height);
+        // ratio[0] = static_cast<float>(newShape.width) / static_cast<float>(shape.width);
+        // ratio[1] = static_cast<float>(newShape.height) / static_cast<float>(shape.height);
     }
 
     dw /= 2.0f;
