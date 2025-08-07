@@ -2,8 +2,7 @@
 
 int main(int argc, char *argv[]) {
     std::string image_file;
-    // std::string image_file = "../image_convert/OriginalData_640/meter_00481.jpg";
-    // std::string image_file = "pressure_image/20250221_pressure1.png";
+
     if(argc > 1)image_file = argv[1];
     else {
         std::cout << "Please input image path" << std::endl;
@@ -20,41 +19,59 @@ int main(int argc, char *argv[]) {
     // std::cout << image_file << 1 << std::endl;
     std::vector<cv::Scalar> colors = Detection::generateRandomColors(model.getNc(), model.getCh());
     std::unordered_map<int, std::string> names = model.getNames();
-    // 画像の読み込み
-    cv::Mat img = cv::imread(image_file, cv::IMREAD_UNCHANGED);
-    // 推論実行
-    std::vector<YoloResults> objs = model.predict_once(
-        img,
-        Detection::CONF_THRESHOLD,
-        Detection::IOU_THRESHOLD,
-        Detection::MASK_THRESHOLD,
-        Detection::CONVERSION_CODE
-    );
-    // -------------------------------------------------------------------------------------
+    // ディレクトリ名
+    // std::string folder_path = "src/misora2_pressure/data/distance-15/";// 0~44
+    // std::string folder_path = "src/misora2_pressure/data/distance-30/";// 0~63
+    std::string folder_path = "src/misora2_pressure/data/distance-45/";// 0~7
+    int max_num = 8;
+
+    for( int i = 0 ; i < max_num ; i++){
+        image_file = folder_path + "pic_" + std::to_string(i) + ".png";
+        std::cout << image_file << std::endl;
     
-    if (img.empty()) {
-        std::cerr << "画像の読み込みに失敗しました: " << image_file << std::endl;
-        return -1;
-    }
-    if(objs.empty()){
-        std::cout << "Not Found" << std::endl;
-    }
-    std::cout << size(objs) <<std::endl;
-    std::cout << "Processing image: " << image_file << " (size: " << img.size() << ")" << std::endl;
-    // 結果の描画
-    cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
-    auto [trimmed, boxed] = Detection::plot_results(img, objs, colors, names);
-    if(trimmed.channels() == 1){
-        std::cout << "Not found" << std::endl;
-    }
-    else {
-        std::cout << "trimmed: " << trimmed.size() << std::endl;
-        cv::imshow("trimmed",trimmed);
-        cv::imshow("with box",boxed);
-        cv::waitKey(0);
-        cv::destroyAllWindows();
-    }
-    
+        // 画像の読み込み
+        cv::Mat img = cv::imread(image_file, cv::IMREAD_UNCHANGED);
+        // 推論実行
+        std::vector<YoloResults> objs = model.predict_once(
+            img,
+            Detection::CONF_THRESHOLD,
+            Detection::IOU_THRESHOLD,
+            Detection::MASK_THRESHOLD,
+            Detection::CONVERSION_CODE
+        );
+        // -------------------------------------------------------------------------------------
+        
+        if (img.empty()) {
+            std::cerr << "画像の読み込みに失敗しました: " << image_file << std::endl;
+            return -1;
+        }
+        if(objs.empty()){
+            std::cout << "Not Found" << std::endl;
+        }
+        std::cout << size(objs) <<std::endl;
+        std::cout << "Processing image: " << image_file << " (size: " << img.size() << ")" << std::endl;
+        // 結果の描画
+        cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+        auto [trimmed, boxed] = Detection::plot_results(img, objs, colors, names);
+        if(trimmed.channels() == 1){
+            std::cout << "Not found" << std::endl;
+        }
+        else {
+            std::cout << "trimmed: " << trimmed.size() << std::endl;
+            // cv::imshow("trimmed",trimmed);
+            // cv::imshow("with box",boxed);
+            // cv::waitKey(0);
+            // cv::destroyAllWindows();
+            // std::string save_file_cropped = "src/misora2_pressure/20250807_cropped/distance-15/pic_" + std::to_string(i) + ".png";
+            // std::string save_file_cropped = "src/misora2_pressure/20250807_cropped/distance-30/pic_" + std::to_string(i) + ".png";
+            std::string save_file_cropped = "src/misora2_pressure/20250807_cropped/distance-45/pic_" + std::to_string(i) + ".png";
+            // std::string save_file_detected = "src/misora2_pressure/20250807_detected/distance-15/pic_" + std::to_string(i) + ".png";
+            // std::string save_file_detected = "src/misora2_pressure/20250807_detected/distance-30/pic_" + std::to_string(i) + ".png";
+            std::string save_file_detected = "src/misora2_pressure/20250807_detected/distance-45/pic_" + std::to_string(i) + ".png";
+            cv::imwrite(save_file_cropped, trimmed);
+            cv::imwrite(save_file_detected,boxed);
+        }
+    } 
 
     return 0;
 }
