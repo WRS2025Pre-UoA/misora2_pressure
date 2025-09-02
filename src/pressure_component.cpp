@@ -8,9 +8,9 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
 {
     receive_image_ = this->create_subscription<MyAdaptedType>("pressure_image",10,std::bind(&PressureMeasurement::update_image_callback,this,std::placeholders::_1));
     
-    pressure_value_publisher_ = this->create_publisher<std_msgs::msg::String>("pressure_result_data",10);
-    result_image_publisher_ = this->create_publisher<MyAdaptedType>("pressure_result_image",10);//不要だったらコメントアウト
-
+    // pressure_value_publisher_ = this->create_publisher<std_msgs::msg::String>("pressure_result_data",10);
+    // result_image_publisher_ = this->create_publisher<MyAdaptedType>("pressure_result_image",10);//不要だったらコメントアウト
+    publisher_ = this->create_publisher<misora2_custom_msg::msg::Custom>("pressure_results",10);
     // 初期設定-----------------------------------------------------
     if (!std::filesystem::exists(Detection::MODEL_PATH)) {
         std::cerr << "Model file does not exist at path: " << Detection::MODEL_PATH << std::endl;
@@ -57,13 +57,18 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
             //     }else RCLCPP_INFO_STREAM(this->get_logger(), "False get pressure value");
             // }else RCLCPP_INFO_STREAM(this->get_logger(), "Couldn't find meter");
                 // テスト用-------------------------------------------
-                std_msgs::msg::String msg_S;
-                msg_S.data = "1.56";
-                pressure_value_publisher_->publish(msg_S);
-                result_image_publisher_->publish(result_image); // ボックス付き画像
+                // std_msgs::msg::String msg_S;
+                // msg_S.data = "1.56";
+                // pressure_value_publisher_->publish(msg_S);
+                // result_image_publisher_->publish(result_image); // ボックス付き画像
                 // result_image_publisher_->publish(trimming_image);
                 RCLCPP_INFO_STREAM(this->get_logger(),"Publish: "<< receive_image.size() );
                 flag = true;
+
+                misora2_custom_msg::msg::Custom data;
+                data.result = "1.56";
+                data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
+                publisher_->publish(data);
                 // ---------------------------------------------------
             }
         }
