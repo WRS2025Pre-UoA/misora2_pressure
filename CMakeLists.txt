@@ -57,12 +57,12 @@ file(GLOB_RECURSE NN_SOURCES "src/nn/*.cpp")
 file(GLOB_RECURSE UTILS_SOURCES "src/utils/*.cpp")
 
 # ライブラリ
-add_library(pressure_library SHARED src/pressure_component.cpp src/detection.cpp ${NN_SOURCES} ${UTILS_SOURCES})
+add_library(pressure_library SHARED src/pressure_component.cpp src/detection.cpp src/measurement.cpp ${NN_SOURCES} ${UTILS_SOURCES})
 ament_target_dependencies(pressure_library ${dependencies})
 target_link_libraries(pressure_library onnxruntime) # ONNX
 rclcpp_components_register_nodes(pressure_library "component_pressure::PressureMeasurement")
 # ノード　
-add_executable(pressure_node src/pressure_component.cpp src/pressure_node.cpp src/detection.cpp ${NN_SOURCES} ${UTILS_SOURCES})
+add_executable(pressure_node src/pressure_component.cpp src/pressure_node.cpp src/detection.cpp src/measurement.cpp ${NN_SOURCES} ${UTILS_SOURCES})
 ament_target_dependencies(pressure_node ${dependencies})
 target_link_libraries(pressure_node onnxruntime) # ONNX
 
@@ -74,6 +74,13 @@ add_executable(pressure_detection
     ${UTILS_SOURCES})
 ament_target_dependencies(pressure_detection ${dependencies})
 target_link_libraries(pressure_detection onnxruntime) # ONNX
+
+# メーター値測定 main関数から実行
+add_executable(pressure_measurement 
+    src/measurement_main.cpp 
+    src/measurement.cpp 
+)
+ament_target_dependencies(pressure_measurement ${dependencies})
 
 set_target_properties(pressure_detection PROPERTIES 
  INSTALL_RPATH "${ONNXRUNTIME_DIR}"
@@ -97,6 +104,7 @@ install(TARGETS
 install(TARGETS
   pressure_node
   pressure_detection
+  pressure_measurement
   DESTINATION lib/${PROJECT_NAME}
 )
 

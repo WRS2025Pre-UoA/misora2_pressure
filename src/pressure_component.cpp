@@ -8,8 +8,6 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
 {
     receive_image_ = this->create_subscription<MyAdaptedType>("pressure_image",10,std::bind(&PressureMeasurement::update_image_callback,this,std::placeholders::_1));
     
-    // pressure_value_publisher_ = this->create_publisher<std_msgs::msg::String>("pressure_result_data",10);
-    // result_image_publisher_ = this->create_publisher<MyAdaptedType>("pressure_result_image",10);//不要だったらコメントアウト
     publisher_ = this->create_publisher<misora2_custom_msg::msg::Custom>("pressure_results",10);
     // 初期設定-----------------------------------------------------
     if (!std::filesystem::exists(Detection::MODEL_PATH)) {
@@ -19,6 +17,7 @@ PressureMeasurement::PressureMeasurement(const rclcpp::NodeOptions &options)
     
     colors = Detection::generateRandomColors(model.getNc(), model.getCh());
     names = model.getNames();
+    RCLCPP_INFO_STREAM(this->get_logger(),"Complete Initialize");
     // -------------------------------------------------------------------
     // cv::Mat型のreceive_imageを入力としたメーター値検出関数 返り値std::pair<string,cv::Mat>func(cv::Mat )
     // auto [pressure_value, result_image] = func(receive_image)
@@ -44,31 +43,25 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
             auto [trimming_image, result_image] = Detection::plot_results(receive_image, objs, colors, names);
             if(trimming_image.channels() == 1) std::cout << "Not found" << std::endl;
             else{ std::cout << "trimmed: " << trimming_image.size() << std::endl;
-            // auto[result_image, trimming_image] = func1(receive_image); // 成功：検出したメーターを囲んだ画像、切り抜いた画像　失敗：黒画像ｘ２
-            // if( result_image.channels() != 1 and trimming_image.channels() != 1 ){ // 検出成功時
-            //     auto[pressure_value, flag_sf] = func2(trimming_image);
-            //     if(flag_sf){
-            //         std_msgs::msg::String msg_S;
-            //         msg_S.data = to_string_with_precision(pressure_value, 7); // 桁数は後々調整
-            //         pressure_value_publisher_->publish(msg_S);
-            //         // 取得したメーター値を検出画像に書き込むこと
-            //         result_image_publisher_->publish(result_image);
-            //         flag = true;
-            //     }else RCLCPP_INFO_STREAM(this->get_logger(), "False get pressure value");
-            // }else RCLCPP_INFO_STREAM(this->get_logger(), "Couldn't find meter");
-                // テスト用-------------------------------------------
-                // std_msgs::msg::String msg_S;
-                // msg_S.data = "1.56";
-                // pressure_value_publisher_->publish(msg_S);
-                // result_image_publisher_->publish(result_image); // ボックス付き画像
-                // result_image_publisher_->publish(trimming_image);
-                RCLCPP_INFO_STREAM(this->get_logger(),"Publish: "<< receive_image.size() );
-                flag = true;
+                Measurement::AngleInput args = Measurement::detect_line(trimming_image);
+                RCLCPP_INFO_STREAM(this->get_logger(),"args center: " << args.center << ", line: " << args.line );
+                if( args.line[0] == 0 && args.line[1] == 0 && args.line[2] == 0 && args.line[3] == 0  ){
+                    RCLCPP_INFO_STREAM(this->get_logger(), "Meter line not found");
+                }
+                else{
+                    double angle = Measurement::calculate_angle_12cw(args.center, args.line);
 
-                misora2_custom_msg::msg::Custom data;
-                data.result = "1.56";
-                data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
-                publisher_->publish(data);
+                    std::string meter_type = "1"; // ここメーターの最大値の種類を決める　オペレータからStringトピックで受け取る or Yoloで自動判別どちらか
+                    double pressure = Measurement::pressure_value_from_angle(angle, meter_type);
+                
+                    flag = true;
+
+                    misora2_custom_msg::msg::Custom data;
+                    data.result = std::to_string(pressure);
+                    data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
+                    publisher_->publish(data);
+                    RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
+                }
                 // ---------------------------------------------------
             }
         }

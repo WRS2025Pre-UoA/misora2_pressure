@@ -24,6 +24,8 @@
 
 #include "misora2_pressure/cv_mat_type_adapter.hpp"
 #include "misora2_pressure/detection.hpp"
+#include "misora2_pressure/measurement.hpp"
+
 #include "misora2_custom_msg/msg/custom.hpp"
 
 using namespace std::chrono_literals;
