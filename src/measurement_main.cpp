@@ -49,8 +49,17 @@ int main(int argc, char *argv[]){
     // 出力（Python関数と同様に角度のみ）
     std::cout << "Angle (12 o'clock, clockwise): " << angle12cw << " deg" << std::endl;
 
-    std::string meter_type = "3"; // 1:1.0MPa, 2:0.25MPa, 3:1.6MPa
-    double pressure = Measurement::pressure_value_from_angle(angle12cw, meter_type);
+    std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
+    // メーター種別分類
+    int meter_type_I = Measurement::classify_meter_type(image, model_path);
+    if (meter_type_I < 0) {
+        std::cerr << "don't find meter_type\n";
+        return 0;
+    }
+    std::string meter_type_S = std::to_string(meter_type_I); // 1:1.0MPa, 2:0.25MPa, 3:1.6MPa
+    std::vector<std::string> meter_types = {"1.0MPa", "0.25MPa", "1.6MPa"};
+    std::cout << "Meter type: 0 ~ " << meter_types[meter_type_I - 1] << std::endl;
+    double pressure = Measurement::pressure_value_from_angle(angle12cw, meter_type_S);
     std::cout << "Pressure: " << pressure << " MPa" << std::endl;
 
     return 0;

@@ -44,23 +44,28 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
             if(trimming_image.channels() == 1) std::cout << "Not found" << std::endl;
             else{ std::cout << "trimmed: " << trimming_image.size() << std::endl;
                 Measurement::AngleInput args = Measurement::detect_line(trimming_image);
-                RCLCPP_INFO_STREAM(this->get_logger(),"args center: " << args.center << ", line: " << args.line );
+                // RCLCPP_INFO_STREAM(this->get_logger(),"args center: " << args.center << ", line: " << args.line );
                 if( args.line[0] == 0 && args.line[1] == 0 && args.line[2] == 0 && args.line[3] == 0  ){
                     RCLCPP_INFO_STREAM(this->get_logger(), "Meter line not found");
                 }
                 else{
                     double angle = Measurement::calculate_angle_12cw(args.center, args.line);
 
-                    std::string meter_type = "1"; // ここメーターの最大値の種類を決める　オペレータからStringトピックで受け取る or Yoloで自動判別どちらか
-                    double pressure = Measurement::pressure_value_from_angle(angle, meter_type);
-                
-                    flag = true;
+                    // メーター種別分類
+                    int meter_type_I = Measurement::classify_meter_type(trimming_image, model_path);
+                    if (meter_type_I > 0){ // メーターの区別ができた
+                        std::string meter_type = std::to_string(meter_type_I); // ここメーターの最大値の種類を決める　オペレータからStringトピックで受け取る or Yoloで自動判別どちらか
+                        double pressure = Measurement::pressure_value_from_angle(angle, meter_type);
+                    
+                        flag = true;
 
-                    misora2_custom_msg::msg::Custom data;
-                    data.result = std::to_string(pressure);
-                    data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
-                    publisher_->publish(data);
-                    RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
+                        misora2_custom_msg::msg::Custom data;
+                        data.result = std::to_string(pressure);
+                        data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
+                        publisher_->publish(data);
+                        RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
+                    }
+                    else RCLCPP_INFO_STREAM(this->get_logger(), "Meter type not found");
                 }
                 // ---------------------------------------------------
             }

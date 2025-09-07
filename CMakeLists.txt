@@ -81,6 +81,7 @@ add_executable(pressure_measurement
     src/measurement.cpp 
 )
 ament_target_dependencies(pressure_measurement ${dependencies})
+target_link_libraries(pressure_measurement onnxruntime)
 
 set_target_properties(pressure_detection PROPERTIES 
  INSTALL_RPATH "${ONNXRUNTIME_DIR}"

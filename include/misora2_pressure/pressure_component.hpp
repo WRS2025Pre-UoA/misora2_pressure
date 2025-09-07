@@ -44,6 +44,8 @@ public:
     std::vector<cv::Scalar> colors;
     std::unordered_map<int, std::string> names;
     // -------------------------------------
+    // メーター種別分類の設定-----------------
+    std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
 
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
     PressureMeasurement() : PressureMeasurement(rclcpp::NodeOptions{}) {}

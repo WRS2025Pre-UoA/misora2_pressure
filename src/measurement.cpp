@@ -130,6 +130,106 @@ Measurement::AngleInput Measurement::detect_line(const cv::Mat& image){
     return out;
 }
 
+// メーター種別分類
+int Measurement::classify_meter_type(const cv::Mat& image, const std::string& model_path, int imgsize){
+    try {
+        if (image.empty()) {
+            std::cerr << "[CLS] failed to read image "<< std::endl;
+            return -1;
+        }
+        cv::Mat rgb; cv::cvtColor(image, rgb, cv::COLOR_BGR2RGB);
+
+        int s = int(imgsize * 1.1);
+        double scale = std::max(s / double(rgb.cols), s / double(rgb.rows));
+        cv::Mat resized; cv::resize(rgb, resized, cv::Size(), scale, scale, cv::INTER_AREA);
+        int x0 = std::max(0, (resized.cols - imgsize) / 2);
+        int y0 = std::max(0, (resized.rows - imgsize) / 2);
+        cv::Mat crop = resized(cv::Rect(x0, y0, std::min(imgsize, resized.cols - x0),
+                                                  std::min(imgsize, resized.rows - y0))).clone();
+        if (crop.cols != imgsize || crop.rows != imgsize) {
+            cv::resize(crop, crop, cv::Size(imgsize, imgsize), 0, 0, cv::INTER_AREA);
+        }
+        crop.convertTo(crop, CV_32F, 1.0/255.0);
+
+        // Normalize (ImageNet)
+        const cv::Scalar mean(0.485, 0.456, 0.406);
+        const cv::Scalar stdv(0.229, 0.224, 0.225);
+        cv::Mat normed = (crop - mean) / stdv;
+
+        // HWC -> NCHW
+        std::vector<float> input(1 * 3 * imgsize * imgsize);
+        std::vector<cv::Mat> ch(3);
+        cv::split(normed, ch);
+        for (int c = 0; c < 3; ++c) {
+            std::memcpy(
+                input.data() + c * imgsize * imgsize,
+                ch[c].ptr<float>(),
+                sizeof(float) * imgsize * imgsize
+            );
+        }
+
+        // 2) ONNX Runtime で推論
+        static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "gaugecls");
+        Ort::SessionOptions opts;
+        opts.SetIntraOpNumThreads(1);
+        // opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+
+        Ort::Session session(env, model_path.c_str(), opts);
+
+        Ort::AllocatorWithDefaultOptions allocator;
+        Ort::AllocatedStringPtr in_name_alloc = session.GetInputNameAllocated(0, allocator);
+        Ort::AllocatedStringPtr out_name_alloc = session.GetOutputNameAllocated(0, allocator);
+        const char* input_name  = in_name_alloc.get();
+        const char* output_name = out_name_alloc.get();
+
+        std::vector<int64_t> input_shape = {1, 3, imgsize, imgsize};
+        Ort::MemoryInfo mem = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            mem, input.data(), input.size(), input_shape.data(), input_shape.size()
+        );
+
+        auto out_tensors = session.Run(
+            Ort::RunOptions{nullptr},
+            &input_name, &input_tensor, 1,
+            &output_name, 1
+        );
+        // logits (1, num_classes)
+        float* logits = out_tensors.front().GetTensorMutableData<float>();
+        size_t num_classes = out_tensors.front().GetTensorTypeAndShapeInfo().GetShape()[1];
+
+        // 3) argmax でクラスID → meter_type へマッピング
+        size_t argmax = 0;
+        float best = logits[0];
+        for (size_t i = 1; i < num_classes; ++i) {
+            if (logits[i] > best) { best = logits[i]; argmax = i; }
+        }
+
+
+        // ラベル名
+        // const char* label = (argmax < sizeof(kClassNames)/sizeof(kClassNames[0]))? kClassNames[argmax] : "UNKNOWN";
+
+        // 学習フォルダ順（ImageFolderのデフォルト）は**辞書順**:
+        // ["0_25MPa", "1_0MPa", "1_6MPa"] と仮定（必要ならクラス順をここで合わせてください）
+        // それぞれ既存関数の meter_type へ変換:
+        // 1=1.0MPa, 2=0.25MPa, 3=1.6MPa
+        //   idx 0 -> "0_25MPa" -> 2
+        //   idx 1 -> "1_0MPa"  -> 1
+        //   idx 2 -> "1_6MPa"  -> 3
+        static const int idx_to_meter_type[] = {2, 1, 3};
+        if (argmax < sizeof(idx_to_meter_type)/sizeof(int)) {
+            int mt = idx_to_meter_type[argmax];
+            // std::cout << "[CLS] meter_type=" << mt << "(" << label << ")" << std::endl;
+
+            return mt;
+        } else {
+            std::cerr << "[CLS] unexpected class index: " << argmax << std::endl;
+            return -1;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[CLS] exception: " << e.what() << std::endl;
+        return -1;
+    }
+}
 // 角度(12時=0°, 時計回り, 単位:度) → 圧力(MPa)
 // 角度(12時=0°, 時計回り, 単位:度) ＋ メーター種別 → 圧力(MPa)
 // meter_type: 1=1.0MPa, 2=0.25MPa, 3=1.6MPa
