@@ -32,7 +32,7 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
     if (not(receive_image.empty())){
         if (flag == false and receive_image.channels() != 1){// カラー画像である
             // 実装分部
-             // 推論実行
+            // 推論実行
             std::vector<YoloResults> objs = model.predict_once(
                 receive_image,
                 Detection::CONF_THRESHOLD,
@@ -61,6 +61,7 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
 
                         misora2_custom_msg::msg::Custom data;
                         data.result = std::to_string(pressure);
+                        cv::cvtColor(result_image, result_image, cv::COLOR_RGB2BGR);
                         data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
                         publisher_->publish(data);
                         RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );

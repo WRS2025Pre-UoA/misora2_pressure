@@ -18,8 +18,8 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/image.hpp>
-// #include <cv_bridge/cv_bridge.h>
-#include <cv_bridge/cv_bridge.hpp>
+#include <cv_bridge/cv_bridge.h>
+// #include <cv_bridge/cv_bridge.hpp>
 #include <rclcpp/type_adapter.hpp>
 
 #include "misora2_pressure/cv_mat_type_adapter.hpp"
