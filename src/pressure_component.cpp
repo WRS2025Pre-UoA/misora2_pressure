@@ -55,13 +55,16 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                     int meter_type_I = Measurement::classify_meter_type(trimming_image, model_path);
                     if (meter_type_I > 0){ // メーターの区別ができた
                         std::string meter_type = std::to_string(meter_type_I); // ここメーターの最大値の種類を決める　オペレータからStringトピックで受け取る or Yoloで自動判別どちらか
+                        
                         double pressure = Measurement::pressure_value_from_angle(angle, meter_type);
-                    
+                        std::string result = PressureMeasurement::to_string_with_precision(pressure,6);
                         flag = true;
 
                         misora2_custom_msg::msg::Custom data;
-                        data.result = std::to_string(pressure);
+                        data.result = result;
                         cv::cvtColor(result_image, result_image, cv::COLOR_RGB2BGR);
+                        cv::Mat send_image = putResult(result_image, result, meter_types[meter_type_I-1]);
+                        data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", send_image).toImageMsg());
                         data.raw_image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", receive_image).toImageMsg());
                         publisher_->publish(data);
                         RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
@@ -82,6 +85,18 @@ std::string PressureMeasurement::to_string_with_precision(double value, int prec
     std::ostringstream out;
     out << std::fixed << std::setprecision(precision) << value;
     return out.str();
+}
+
+cv::Mat PressureMeasurement::putResult(cv::Mat& image, std::string result, std::string type){
+    // フォント、サイズ、色、線の太さ、線種
+    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+    double fontScale = 1.0;
+    int thickness = 2;
+    cv::Scalar textColor(0, 0, 255); // BGR → 赤
+    cv::Point Position(int(image.cols / 8), int(image.rows / 5));
+    std::string text = "Type: " + type + " , Value: " + result + " MPa";
+    cv::putText(image, text, Position, fontFace, fontScale, textColor, thickness, cv::LINE_AA);
+    return image;
 }
 
 } //namespace component_pressure

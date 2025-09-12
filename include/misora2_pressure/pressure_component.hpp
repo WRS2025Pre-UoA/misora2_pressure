@@ -18,8 +18,8 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <cv_bridge/cv_bridge.h>
-// #include <cv_bridge/cv_bridge.hpp>
+// #include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <rclcpp/type_adapter.hpp>
 
 #include "misora2_pressure/cv_mat_type_adapter.hpp"
@@ -45,14 +45,16 @@ public:
     std::unordered_map<int, std::string> names;
     // -------------------------------------
     // メーター種別分類の設定-----------------
-    std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
-
+    std::string model_path = "/home/misora2/misora2_ws/src/misora2_pressure/checkpoints/model_resnet18.onnx";
+    // std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
+    std::vector<std::string> meter_types = {"1.0", "0.25", "1.6"};
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
     PressureMeasurement() : PressureMeasurement(rclcpp::NodeOptions{}) {}
 
 private:
     void update_image_callback(const std::unique_ptr<cv::Mat> msg);
     std::string to_string_with_precision(double value, int precision);
+    cv::Mat putResult(cv::Mat& image, std::string result, std::string type);
 
     rclcpp::Subscription<MyAdaptedType>::SharedPtr receive_image_;
     // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pressure_value_publisher_;
