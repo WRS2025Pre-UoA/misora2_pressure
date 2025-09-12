@@ -64,6 +64,8 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                         cv::cvtColor(result_image, result_image, cv::COLOR_RGB2BGR);
                         data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", result_image).toImageMsg());
                         publisher_->publish(data);
+                        data.raw_image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", receive_image).toImageMsg());
+                        publisher_->publish(data);
                         RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
                     }
                     else RCLCPP_INFO_STREAM(this->get_logger(), "Meter type not found");
