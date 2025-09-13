@@ -67,6 +67,9 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                         data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", send_image).toImageMsg());
                         data.raw_image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", receive_image).toImageMsg());
                         publisher_->publish(data);
+                        // cv::imshow("test", send_image);
+                        // cv::waitKey(0);
+                        // cv::destroyAllWindows();
                         RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
                     }
                     else RCLCPP_INFO_STREAM(this->get_logger(), "Meter type not found");
@@ -88,14 +91,14 @@ std::string PressureMeasurement::to_string_with_precision(double value, int prec
 }
 
 cv::Mat PressureMeasurement::putResult(cv::Mat& image, std::string result, std::string type){
-    // フォント、サイズ、色、線の太さ、線種
-    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-    double fontScale = 1.0;
-    int thickness = 2;
-    cv::Scalar textColor(0, 0, 255); // BGR → 赤
-    cv::Point Position(int(image.cols / 8), int(image.rows / 5));
     std::string text = "Type: " + type + " , Value: " + result + " MPa";
-    cv::putText(image, text, Position, fontFace, fontScale, textColor, thickness, cv::LINE_AA);
+    // フォント、サイズ、色、線の太さ、線種
+    int baseline = 0;
+    cv::Size text_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX|cv::FONT_ITALIC, 1, 2, &baseline);
+    // std::cout << text_size << std::endl;
+    cv::Point tp = cv::Point(int(image.cols-text_size.width)/2,text_size.height+5);
+    cv::Scalar color = cv::Scalar(0, 0, 255);
+    cv::putText(image, text, tp, cv::FONT_HERSHEY_SIMPLEX|cv::FONT_ITALIC, 1, color, 2);
     return image;
 }
 
