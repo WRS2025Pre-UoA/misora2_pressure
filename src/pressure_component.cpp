@@ -63,6 +63,7 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                         misora2_custom_msg::msg::Custom data;
                         data.result = result;
                         cv::cvtColor(result_image, result_image, cv::COLOR_RGB2BGR);
+                        cv::cvtColor(receive_image, receive_image, cv::COLOR_RGB2BGR);
                         cv::Mat send_image = putResult(result_image, result, meter_types[meter_type_I-1]);
                         data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", send_image).toImageMsg());
                         data.raw_image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", receive_image).toImageMsg());
