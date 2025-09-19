@@ -45,8 +45,8 @@ public:
     std::unordered_map<int, std::string> names;
     // -------------------------------------
     // メーター種別分類の設定-----------------
-    // std::string model_path = "/home/misora2/misora2_ws/src/misora2_pressure/checkpoints/model_resnet18.onnx";
-    std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
+    std::string model_path = "/home/misora2/misora2_ws/src/misora2_pressure/checkpoints/model_resnet18.onnx";
+    // std::string model_path = "src/misora2_pressure/checkpoints/model_resnet18.onnx";
     std::vector<std::string> meter_types = {"1.0", "0.25", "1.6"};
     explicit PressureMeasurement(const rclcpp::NodeOptions &options);
     PressureMeasurement() : PressureMeasurement(rclcpp::NodeOptions{}) {}
