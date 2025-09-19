@@ -78,7 +78,7 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
             }
         }
         else if(receive_image.channels() == 1){
-            RCLCPP_INFO_STREAM(this->get_logger(),"Receive: black image" );
+            RCLCPP_INFO_STREAM(this->get_logger(),"Failed finding" );
             flag = false;// 1 chanelある画像　黒画像  
         }
     }

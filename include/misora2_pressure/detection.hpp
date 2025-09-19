@@ -15,8 +15,8 @@
 
 class Detection {
 public:
-    static constexpr const char* MODEL_PATH = "/home/misora2/misora2_ws/src/misora2_pressure/checkpoints/best.onnx";
-    // static constexpr const char* MODEL_PATH = "src/misora2_pressure/checkpoints/best.onnx";
+    // static constexpr const char* MODEL_PATH = "/home/misora2/misora2_ws/src/misora2_pressure/checkpoints/best.onnx";
+    static constexpr const char* MODEL_PATH = "src/misora2_pressure/checkpoints/best.onnx";
     static constexpr const char* ONNX_PROVIDER = "cpu";
     static constexpr const char* ONNX_LOGID = "yolov8_inference2";
     static constexpr const float MASK_THRESHOLD = 0.4f;
