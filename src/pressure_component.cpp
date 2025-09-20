@@ -68,9 +68,6 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
                         data.image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", send_image).toImageMsg());
                         data.raw_image = *(cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", receive_image).toImageMsg());
                         publisher_->publish(data);
-                        // cv::imshow("test", send_image);
-                        // cv::waitKey(0);
-                        // cv::destroyAllWindows();
                         RCLCPP_INFO_STREAM(this->get_logger(),"Publish data: "<< pressure << ", and image: " << result_image.size );
                     }
                     else RCLCPP_INFO_STREAM(this->get_logger(), "Meter type not found");
@@ -79,8 +76,9 @@ void PressureMeasurement::update_image_callback(const std::unique_ptr<cv::Mat> m
             }
         }
         else if(receive_image.channels() == 1){
-            RCLCPP_INFO_STREAM(this->get_logger(),"Failed finding" );
-            flag = false;// 1 chanelある画像　黒画像  
+            if (flag) RCLCPP_INFO_STREAM(this->get_logger(), "Success Process");
+            else RCLCPP_INFO_STREAM(this->get_logger(),"Failed Process" );
+            flag = false;// 1 chanelある画像　黒画像 
         }
     }
 }
